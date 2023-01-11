@@ -470,3 +470,12 @@ def test_storage_service_keyspace_upgrade_sstables(cql, this_dc, rest_api):
                 # non-existing table
                 resp = rest_api.send("GET", f"storage_service/keyspace_upgrade_sstables/{keyspace}", { "cf": f"{test_tables[0]},XXX" })
                 assert resp.status_code == requests.codes.bad_request
+
+def test_storage_service_system_keyspace_repair(rest_api):
+    resp = rest_api.send("POST", f"storage_service/repair_async/system")
+    resp.raise_for_status()
+    assert resp.json() == 1, "Repair got invalid sequence number"
+
+    resp = rest_api.send("GET", "task_manager/list_module_tasks/repair")
+    resp.raise_for_status()
+    assert not resp.json(), "Repair of system keyspace didn't finish immediately"
